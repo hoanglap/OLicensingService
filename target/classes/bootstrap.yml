@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: licensing-service
+  profiles:
+    active: dev
+  cloud:
+    config:
+      uri: http://localhost:8071
+
+management:
+  endpoint:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        exclude: env
+
+
+resilience4j:
+  bulkhead:
+    instances:
+      bulkheadLicenseService:
+        maxWaitDuration: 10ms
+        maxConcurrentCalls: 20
+  resilience4j:
+    thread-pool-bulkhead:
+      instances:
+        bulkheadLicenseService:
+          maxThreadPoolSize: 1
+          coreThreadPoolSize: 1
+          queueCapacity: 1
+          keepAliveDuration: 20ms
+
+
+  retry:
+    instances:
+      retryLicenseService:
+        maxRetryAttempts: 5
+        waitDuration: 1000
+        retry-exceptions:
+          - java.util.concurrent.TimeoutException
+          - org.hibernate.QueryTimeoutException
+          - java.lang.Exception
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.RestClientException
+
+  ratelimiter:
+    instances:
+      licenseService:
+        timeoutDuration: 1s
+        limitRefreshPeriod: 20s
+        limitForPeriod: 20
